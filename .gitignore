@@ -1,0 +1,14 @@
+# Local configuration and generated data
+backend/.env
+backend/financial_research.db
+data/uploads/
+data/chroma/
+
+# Python generated files
+backend/.venv/
+backend/**/__pycache__/
+*.py[cod]
+
+# Frontend generated files
+frontend/node_modules/
+frontend/dist/
