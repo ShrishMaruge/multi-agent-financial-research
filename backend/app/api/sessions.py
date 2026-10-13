@@ -5,13 +5,20 @@ from app.database import get_db
 from app.models import ResearchSession
 from app.schemas import SessionCreate, SessionResponse
 
-router = APIRouter(prefix="/sessions", tags=["Research Sessions"])
+
+router = APIRouter(
+    prefix="/sessions",
+    tags=["Research Sessions"],
+)
 
 
 @router.post("", response_model=SessionResponse)
-def create_session(payload: SessionCreate, db: Session = Depends(get_db)):
+def create_session(
+    payload: SessionCreate,
+    db: Session = Depends(get_db),
+):
     session = ResearchSession(
-        name=payload.name,
+        name=payload.name.strip(),
         description=payload.description,
     )
 
@@ -32,10 +39,16 @@ def list_sessions(db: Session = Depends(get_db)):
 
 
 @router.get("/{session_id}", response_model=SessionResponse)
-def get_session(session_id: int, db: Session = Depends(get_db)):
+def get_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+):
     session = db.get(ResearchSession, session_id)
 
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found.")
+        raise HTTPException(
+            status_code=404,
+            detail="Research session not found.",
+        )
 
     return session

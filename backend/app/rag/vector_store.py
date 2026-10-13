@@ -5,12 +5,14 @@ from app.config import settings
 
 class VectorStore:
     """
-    Stores document chunks and metadata in ChromaDB.
-    This makes the annual report searchable for future Research Agent work.
+    Persistent ChromaDB storage for annual-report chunks.
     """
 
     def __init__(self):
-        self.client = chromadb.PersistentClient(path=str(settings.chroma_path))
+        self.client = chromadb.PersistentClient(
+            path=str(settings.chroma_path)
+        )
+
         self.collection = self.client.get_or_create_collection(
             name="financial_document_chunks"
         )
@@ -46,7 +48,7 @@ class VectorStore:
         self,
         document_id: int,
         query: str,
-        limit: int = 8,
+        limit: int = 5,
     ) -> list[dict]:
         result = self.collection.query(
             query_texts=[query],
@@ -54,18 +56,40 @@ class VectorStore:
             where={"document_id": document_id},
         )
 
-        chunks = []
+        documents = result.get("documents", [[]])[0] or []
+        metadatas = result.get("metadatas", [[]])[0] or []
 
-        for document, metadata in zip(
-            result["documents"][0],
-            result["metadatas"][0],
-        ):
-            chunks.append(
-                {
-                    "text": document,
-                    "page": metadata["page"],
-                    "metadata": metadata,
-                }
-            )
+        return [
+            {
+                "text": document,
+                "page": metadata["page"],
+                "document_id": metadata["document_id"],
+                "metadata": metadata,
+            }
+            for document, metadata in zip(documents, metadatas)
+        ]
 
-        return chunks
+    def search_session(
+        self,
+        session_id: int,
+        query: str,
+        limit: int = 10,
+    ) -> list[dict]:
+        result = self.collection.query(
+            query_texts=[query],
+            n_results=limit,
+            where={"session_id": session_id},
+        )
+
+        documents = result.get("documents", [[]])[0] or []
+        metadatas = result.get("metadatas", [[]])[0] or []
+
+        return [
+            {
+                "text": document,
+                "page": metadata["page"],
+                "document_id": metadata["document_id"],
+                "metadata": metadata,
+            }
+            for document, metadata in zip(documents, metadatas)
+        ]

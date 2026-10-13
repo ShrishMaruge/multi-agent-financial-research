@@ -12,6 +12,7 @@ class ResearchSession(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -27,19 +28,44 @@ class Document(Base):
     __tablename__ = "documents"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    session_id: Mapped[int] = mapped_column(ForeignKey("research_sessions.id"))
 
-    original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
-    stored_filename: Mapped[str] = mapped_column(String(255), nullable=False)
-    file_path: Mapped[str] = mapped_column(String(600), nullable=False)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("research_sessions.id"),
+        nullable=False,
+    )
 
-    company_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    fiscal_year: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    original_filename: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+    stored_filename: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+    file_path: Mapped[str] = mapped_column(
+        String(600),
+        nullable=False,
+    )
 
-    status: Mapped[str] = mapped_column(String(50), default="uploaded")
+    company_name: Mapped[str | None] = mapped_column(
+        String(120),
+        nullable=True,
+    )
+    fiscal_year: Mapped[str | None] = mapped_column(
+        String(30),
+        nullable=True,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(50),
+        default="uploaded",
+    )
     page_count: Mapped[int] = mapped_column(Integer, default=0)
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)
-    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -47,7 +73,7 @@ class Document(Base):
     )
 
     session: Mapped["ResearchSession"] = relationship(
-        back_populates="documents"
+        back_populates="documents",
     )
 
     metrics: Mapped[list["FinancialMetric"]] = relationship(
@@ -55,18 +81,105 @@ class Document(Base):
         cascade="all, delete-orphan",
     )
 
+    red_flags: Mapped[list["RedFlag"]] = relationship(
+        back_populates="document",
+        cascade="all, delete-orphan",
+    )
+
+
 class FinancialMetric(Base):
     __tablename__ = "financial_metrics"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"))
 
-    metric_name: Mapped[str] = mapped_column(String(150), nullable=False)
-    metric_value: Mapped[str] = mapped_column(String(250), nullable=False)
-    period: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("documents.id"),
+        nullable=False,
+    )
 
-    source_page: Mapped[int] = mapped_column(Integer, nullable=False)
-    evidence: Mapped[str] = mapped_column(Text, nullable=False)
-    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    metric_name: Mapped[str] = mapped_column(
+        String(150),
+        nullable=False,
+    )
+    metric_value: Mapped[str] = mapped_column(
+        String(250),
+        nullable=False,
+    )
+    period: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
 
-    document: Mapped["Document"] = relationship(back_populates="metrics")
+    source_page: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+    evidence: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+    confidence: Mapped[float] = mapped_column(
+        Float,
+        default=0.0,
+    )
+
+    document: Mapped["Document"] = relationship(
+        back_populates="metrics",
+    )
+
+
+class RedFlag(Base):
+    __tablename__ = "red_flags"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("documents.id"),
+        nullable=False,
+    )
+
+    category: Mapped[str] = mapped_column(
+        String(80),
+        nullable=False,
+    )
+    severity: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+    )
+    title: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False,
+    )
+    explanation: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    source_page: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+    evidence: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    confidence: Mapped[float] = mapped_column(
+        Float,
+        default=0.0,
+        nullable=False,
+    )
+    confidence_explanation: Mapped[str] = mapped_column(
+        Text,
+        default="",
+        nullable=False,
+    )
+    matched_signals: Mapped[str] = mapped_column(
+        Text,
+        default="",
+        nullable=False,
+    )
+
+    document: Mapped["Document"] = relationship(
+        back_populates="red_flags",
+    )
